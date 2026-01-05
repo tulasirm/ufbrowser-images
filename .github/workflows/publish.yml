@@ -1,0 +1,26 @@
+name: Publish Browser Images
+
+on:
+  schedule:
+    # Run daily at 02:00 UTC (checks for new browser versions)
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    # Allow manual trigger
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Publish Images
+        run: |
+          chmod +x ./publish.sh
+          ./publish.sh
