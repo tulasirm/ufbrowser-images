@@ -94,7 +94,7 @@ COPY common/scripts /opt/bin/
 RUN chmod +x /opt/bin/*.sh
 
 # 7. Configuration
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY ubuntu-full/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # 8. Entrypoint
 ENTRYPOINT ["/opt/bin/entrypoint.sh"]
