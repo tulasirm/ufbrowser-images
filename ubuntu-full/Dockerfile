@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     nodejs \
     npm \
+    jq \
     && rm -rf /var/lib/apt/lists/*
 
 # 2. NoVNC Installation
@@ -45,11 +46,20 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
 # For "ultra-fast/light", maybe we skip pre-installing driver binary if valid CDP is goal? 
 # User asked for "Selenium (Drivers ... NO Grid)". We should install the driver.
 # Fetch generic stable driver (Warning: Version mismatch risk if Chrome updates)
+# Fetch Chromedriver for Stable Chrome using new CfT JSON endpoints
+# 1. Get Installed Chrome Version
+# 2. Query JSON for matching driver URL
 RUN CHROME_VERSION=$(google-chrome --version | awk '{print $3}' | awk -F'.' '{print $1}') \
-    && DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION") \
-    && wget -q "https://chromedriver.storage.googleapis.com/$DRIVER_VERSION/chromedriver_linux64.zip" \
-    && unzip chromedriver_linux64.zip -d /usr/local/bin/ \
-    && rm chromedriver_linux64.zip
+    && echo "Installed Chrome Major Version: $CHROME_VERSION" \
+    # Fetch URL for "Stable" channel from Google Chrome Labs
+    && DRIVER_URL=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json" | jq -r '.channels.Stable.downloads.chromedriver[] | select(.platform=="linux64") | .url') \
+    && echo "Downloading Chromedriver from: $DRIVER_URL" \
+    && wget -q "$DRIVER_URL" -O chromedriver_linux64.zip \
+    && unzip chromedriver_linux64.zip \
+    # Unzip creates a directory like "chromedriver-linux64/chromedriver"
+    && mv chromedriver-linux64/chromedriver /usr/local/bin/ \
+    && chmod +x /usr/local/bin/chromedriver \
+    && rm -rf chromedriver_linux64.zip chromedriver-linux64
 
 # 4. Firefox & Driver (Selenium Support) - PPA (Non-Snap) Version
 # Ubuntu 22.04 defaults to Snap for Firefox, which fails in Docker. We use the Mozilla Team PPA.
