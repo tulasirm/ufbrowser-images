@@ -15,8 +15,12 @@ get_version() {
     local image=$1
     local cmd=$2
     # Run container to get version string. 
-    # Grep/Awk usage depends on specific output of browser --version
-    docker run --rm "$image" sh -c "$cmd" | head -n 1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|[0-9]+\.[0-9]+\.[0-9]+' | head -n 1
+    # Capture output first to avoid broken pipes from grep closing early
+    local full_output
+    full_output=$(docker run --rm "$image" sh -c "$cmd" 2>&1)
+    
+    # Extract version using grep
+    echo "$full_output" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|[0-9]+\.[0-9]+\.[0-9]+' | head -n 1
 }
 
 # --- Build & Publish Logic ---
