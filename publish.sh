@@ -63,8 +63,10 @@ publish_image() {
     
     # Check Registry (Idempotency)
     echo "Checking registry..."
-    if docker manifest inspect "$TAG_FULL" > /dev/null 2>&1; then
+    # If FORCE_PUBLISH is not true AND the manifest exists, we skip.
+    if [ "$FORCE_PUBLISH" != "true" ] && docker manifest inspect "$TAG_FULL" > /dev/null 2>&1; then
         echo "⚠️  $TAG_FULL already exists. Skipping."
+        echo "   (Set FORCE_PUBLISH=true to override)"
         return 0
     fi
     
